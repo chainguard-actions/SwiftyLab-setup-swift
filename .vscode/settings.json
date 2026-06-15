@@ -1,0 +1,11 @@
+{
+  "vitest.enable": true,
+  "files.exclude": {
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "swiftorg": true,
+    "lib": true,
+    "dist": true
+  }
+}
