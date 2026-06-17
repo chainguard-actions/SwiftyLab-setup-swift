@@ -1,0 +1,38 @@
+name: Test current swift version keyword
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          swift-version: 'current'
+          dry-run: 'true'
+      - name: Assert swift-version output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.swift-version }}
+        run: |
+          echo "actual swift-version: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: swift-version output is empty"
+            exit 1
+          fi
+          echo "PASS: swift-version=$ACTUAL"
+      - name: Assert toolchain output is set and valid JSON
+        env:
+          ACTUAL: ${{ steps.action.outputs.toolchain }}
+        run: |
+          echo "actual toolchain: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: toolchain output is empty"
+            exit 1
+          fi
+          echo "$ACTUAL" | python3 -m json.tool > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          fi
+          echo "PASS: toolchain is valid JSON"
