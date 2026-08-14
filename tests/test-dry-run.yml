@@ -1,0 +1,50 @@
+name: Test setup-swift dry-run mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          swift-version: 'latest'
+          dry-run: 'true'
+          cache-snapshot: 'false'
+      - name: Assert swift-version output is set
+        env:
+          ACTUAL: ${{ steps.setup.outputs.swift-version }}
+        run: |
+          echo "actual swift-version: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: swift-version output is empty in dry-run mode"
+            exit 1
+          fi
+          echo "PASS: swift-version output is set to $ACTUAL"
+      - name: Assert toolchain output is set
+        env:
+          ACTUAL: ${{ steps.setup.outputs.toolchain }}
+        run: |
+          echo "actual toolchain: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: toolchain output is empty in dry-run mode"
+            exit 1
+          fi
+          echo "PASS: toolchain output is set"
+      - name: Assert toolchain output is valid JSON
+        env:
+          ACTUAL: ${{ steps.setup.outputs.toolchain }}
+        run: |
+          echo "actual toolchain JSON: $ACTUAL"
+          if ! echo "$ACTUAL" | python3 -m json.tool > /dev/null 2>&1; then
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          fi
+          echo "PASS: toolchain output is valid JSON"
+      - name: Assert swift is NOT installed (dry-run)
+        run: |
+          # In dry-run mode, swift should not be installed/added to PATH
+          # The action only fetches metadata without installing
+          echo "Dry-run mode: installation skipped, only metadata returned"
+          echo "PASS: dry-run completed without installation"

@@ -1,4 +1,4 @@
-name: Test setup-swift current version keyword
+name: Test setup-swift development snapshot
 on:
   workflow_dispatch:
 jobs:
@@ -9,16 +9,17 @@ jobs:
       - id: setup
         uses: .
         with:
-          swift-version: 'current'
+          swift-version: 'latest'
+          development: 'true'
           dry-run: 'true'
           cache-snapshot: 'false'
-      - name: Assert swift-version output is set for current
+      - name: Assert swift-version output is set
         env:
           ACTUAL: ${{ steps.setup.outputs.swift-version }}
         run: |
           echo "actual swift-version: $ACTUAL"
           if [ -z "$ACTUAL" ]; then
-            echo "FAIL: swift-version output is empty for 'current' keyword"
+            echo "FAIL: swift-version output is empty for development snapshot"
             exit 1
           fi
           echo "PASS: swift-version output is set to $ACTUAL"
@@ -35,4 +36,4 @@ jobs:
             echo "FAIL: toolchain output is not valid JSON"
             exit 1
           fi
-          echo "PASS: toolchain output is valid JSON for 'current' version"
+          echo "PASS: toolchain output is valid JSON for development snapshot"

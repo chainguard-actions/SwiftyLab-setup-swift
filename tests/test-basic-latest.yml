@@ -1,4 +1,4 @@
-name: Test setup-swift current version keyword
+name: Test setup-swift basic latest
 on:
   workflow_dispatch:
 jobs:
@@ -9,20 +9,19 @@ jobs:
       - id: setup
         uses: .
         with:
-          swift-version: 'current'
-          dry-run: 'true'
+          swift-version: 'latest'
           cache-snapshot: 'false'
-      - name: Assert swift-version output is set for current
+      - name: Assert swift-version output is set
         env:
           ACTUAL: ${{ steps.setup.outputs.swift-version }}
         run: |
           echo "actual swift-version: $ACTUAL"
           if [ -z "$ACTUAL" ]; then
-            echo "FAIL: swift-version output is empty for 'current' keyword"
+            echo "FAIL: swift-version output is empty"
             exit 1
           fi
           echo "PASS: swift-version output is set to $ACTUAL"
-      - name: Assert toolchain output is set and valid JSON
+      - name: Assert toolchain output is set
         env:
           ACTUAL: ${{ steps.setup.outputs.toolchain }}
         run: |
@@ -31,8 +30,12 @@ jobs:
             echo "FAIL: toolchain output is empty"
             exit 1
           fi
-          if ! echo "$ACTUAL" | python3 -m json.tool > /dev/null 2>&1; then
-            echo "FAIL: toolchain output is not valid JSON"
+          echo "PASS: toolchain output is set"
+      - name: Assert swift is available on PATH
+        run: |
+          if ! command -v swift &>/dev/null; then
+            echo "FAIL: swift not found on PATH"
             exit 1
           fi
-          echo "PASS: toolchain output is valid JSON for 'current' version"
+          echo "PASS: swift found at $(command -v swift)"
+          swift --version
