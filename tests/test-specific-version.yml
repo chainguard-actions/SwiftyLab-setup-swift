@@ -1,0 +1,54 @@
+name: Test specific Swift version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-swift
+        uses: .
+        with:
+          swift-version: '5.10'
+      - name: Assert swift-version output is set
+        env:
+          ACTUAL: ${{ steps.setup-swift.outputs.swift-version }}
+        run: |
+          echo "actual swift-version: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: swift-version output is empty"
+            exit 1
+          fi
+          echo "PASS: swift-version is set to $ACTUAL"
+      - name: Assert swift-version starts with 5.10
+        env:
+          ACTUAL: ${{ steps.setup-swift.outputs.swift-version }}
+        run: |
+          echo "actual swift-version: $ACTUAL"
+          if [[ "$ACTUAL" != 5.10* ]]; then
+            echo "FAIL: expected swift-version to start with '5.10', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: swift-version starts with 5.10"
+      - name: Assert toolchain output is valid JSON
+        env:
+          ACTUAL: ${{ steps.setup-swift.outputs.toolchain }}
+        run: |
+          echo "actual toolchain: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: toolchain output is empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | python3 -c "import sys, json; json.load(sys.stdin)" 2>/dev/null; then
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          fi
+          echo "PASS: toolchain is valid JSON"
+      - name: Assert swift is available on PATH
+        run: |
+          if ! command -v swift &>/dev/null; then
+            echo "FAIL: swift not found on PATH"
+            exit 1
+          fi
+          echo "PASS: swift found at $(command -v swift)"
+          swift --version
