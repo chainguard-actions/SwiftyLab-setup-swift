@@ -1,0 +1,64 @@
+name: Test dry-run with development snapshot (URL-based)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          # Use a URL for a development snapshot to avoid swift.org data fetch (requiresSwiftOrg=false)
+          swift-version: 'https://github.com/swiftwasm/swift/releases/download/swift-wasm-5.10-SNAPSHOT-2024-03-30-a/swift-wasm-5.10-SNAPSHOT-2024-03-30-a-ubuntu22.04_x86_64.tar.gz'
+          development: 'true'
+          dry-run: 'true'
+          cache-snapshot: 'false'
+
+      - name: Assert swift-version output is set
+        env:
+          SWIFT_VERSION: ${{ steps.action.outputs.swift-version }}
+        run: |
+          echo "swift-version: $SWIFT_VERSION"
+          if [ -z "$SWIFT_VERSION" ]; then
+            echo "FAIL: swift-version output is empty"
+            exit 1
+          fi
+          echo "PASS: swift-version is '$SWIFT_VERSION'"
+
+      - name: Assert toolchain output is set and valid JSON
+        env:
+          TOOLCHAIN: ${{ steps.action.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if [ -z "$TOOLCHAIN" ]; then
+            echo "FAIL: toolchain output is empty"
+            exit 1
+          fi
+          echo "$TOOLCHAIN" | python3 -c "import sys,json; json.load(sys.stdin)" > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          fi
+          echo "PASS: toolchain is valid JSON"
+
+      - name: Assert toolchain JSON contains snapshot-related fields
+        env:
+          TOOLCHAIN: ${{ steps.action.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if echo "$TOOLCHAIN" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          assert 'download' in d, 'missing download field'
+          assert 'dir' in d, 'missing dir field'
+          download = d.get('download', '')
+          assert 'swift' in download.lower() or 'wasm' in download.lower(), f'unexpected download: {download}'
+          print('download:', download)
+          " 2>/dev/null; then
+            echo "PASS: toolchain JSON has expected snapshot fields"
+          else
+            echo "FAIL: toolchain JSON missing expected snapshot fields"
+            exit 1
+          fi

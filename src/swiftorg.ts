@@ -1,0 +1,139 @@
+import * as path from 'path'
+import * as fs from 'fs/promises'
+import * as core from '@actions/core'
+import {exec} from '@actions/exec'
+import {MODULE_DIR, SWIFTORG, SWIFTORG_ORIGIN, SWIFTORG_METADATA} from './const'
+import * as https from 'https'
+
+let swiftorgContractVersion: Promise<string | undefined> | undefined = undefined
+
+async function getSwiftorgContractVersion(): Promise<string | undefined> {
+  if (swiftorgContractVersion !== undefined) {
+    return await swiftorgContractVersion
+  }
+
+  swiftorgContractVersion = (async () => {
+    const data = await fs.readFile(
+      path.join(MODULE_DIR, 'package.json'),
+      'utf8'
+    )
+    const packageJson = JSON.parse(data)
+    return packageJson['swiftorg-contract-version']
+  })()
+  return swiftorgContractVersion
+}
+
+export class Swiftorg {
+  constructor(readonly checkLatest: boolean | string) {
+    if (typeof checkLatest === 'string') {
+      try {
+        const checkLatestBool = JSON.parse(checkLatest)
+        if (typeof checkLatestBool === 'boolean') {
+          this.checkLatest = checkLatestBool
+          return
+        }
+      } catch (error) {
+        core.debug(`Parsing 'check-latest' failed with error: "${error}"`)
+      }
+    }
+    if (checkLatest) {
+      this.checkLatest = checkLatest
+    } else {
+      this.checkLatest = false
+    }
+  }
+
+  private static async commitFromMetadata(metadata: {
+    commit?: string
+    commits?: Record<string, string>
+  }): Promise<string | undefined> {
+    const version = await getSwiftorgContractVersion()
+    if (!version) {
+      return metadata.commit
+    }
+    return metadata.commits?.[version] ?? metadata.commit
+  }
+
+  private async swiftorgMetadata(): Promise<{commit?: string}> {
+    if (process.env.SETUPSWIFT_SWIFTORG_METADATA) {
+      const metadata = JSON.parse(process.env.SETUPSWIFT_SWIFTORG_METADATA)
+      const commit = await Swiftorg.commitFromMetadata(metadata)
+      if (commit) {
+        return {commit}
+      }
+    }
+    return new Promise((resolve, reject) => {
+      https.get(SWIFTORG_METADATA, res => {
+        const {statusCode} = res
+        const contentType = res.headers['content-type']
+
+        let error
+        if (statusCode !== 200) {
+          error = new Error(`Request Failed Status Code: '${statusCode}'`)
+        } else if (!contentType?.startsWith('application/json')) {
+          error = new Error(`Invalid content-type: '${contentType}'`)
+        }
+
+        if (error) {
+          core.error(error.message)
+          res.resume()
+          reject(error)
+          return
+        }
+
+        let rawData = ''
+        res.setEncoding('utf8')
+        res.on('data', chunk => {
+          rawData += chunk
+        })
+        res.on('end', () => {
+          try {
+            const parsedData = JSON.parse(rawData)
+            core.debug(`Received swift.org metadata: "${rawData}"`)
+            Swiftorg.commitFromMetadata(parsedData).then(
+              commit => resolve({commit}),
+              e => reject(e)
+            )
+          } catch (e) {
+            core.error(`Parsing swift.org metadata error: '${e}'`)
+            reject(e)
+          }
+        })
+      })
+    })
+  }
+
+  async update() {
+    let ref: string
+    if (typeof this.checkLatest === 'boolean' && this.checkLatest) {
+      ref = 'HEAD'
+    } else if (typeof this.checkLatest === 'string') {
+      ref = this.checkLatest
+    } else {
+      const swiftorgMetadata = await this.swiftorgMetadata()
+      ref = swiftorgMetadata.commit ?? 'HEAD'
+    }
+
+    const swiftorg = path.join(MODULE_DIR, SWIFTORG)
+    const origin = SWIFTORG_ORIGIN
+    core.debug(`Adding submodule at "${swiftorg}" directory`)
+    const cwd = {cwd: swiftorg}
+    // Only these subtrees are read by the action. A blobless partial clone
+    // (`--filter=blob:none`) combined with a cone-mode sparse checkout limits
+    // both the fetched objects and the populated working tree to these paths,
+    // avoiding the rest of the swift.org website (assets, images, blog, etc.).
+    await exec('git', ['init', swiftorg])
+    await exec('git', ['remote', 'add', 'origin', origin], cwd)
+    await exec(
+      'git',
+      ['sparse-checkout', 'set', '_data', '_includes', 'install'],
+      cwd
+    )
+    await exec(
+      'git',
+      ['fetch', 'origin', ref, '--depth=1', '--no-tags', '--filter=blob:none'],
+      cwd
+    )
+    await exec('git', ['checkout', 'FETCH_HEAD', '--detach'], cwd)
+  }
+}

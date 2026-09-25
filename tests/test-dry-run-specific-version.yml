@@ -1,0 +1,74 @@
+name: Test dry-run with specific Swift version (URL-based)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          # Use a URL for Swift 5.10 to avoid swift.org data fetch (requiresSwiftOrg=false)
+          swift-version: 'https://github.com/apple/swift/releases/download/swift-5.10-RELEASE/swift-5.10-RELEASE-ubuntu22.04.tar.gz'
+          dry-run: 'true'
+          cache-snapshot: 'false'
+
+      - name: Assert swift-version output is set
+        env:
+          SWIFT_VERSION: ${{ steps.action.outputs.swift-version }}
+        run: |
+          echo "swift-version: $SWIFT_VERSION"
+          if [ -z "$SWIFT_VERSION" ]; then
+            echo "FAIL: swift-version output is empty"
+            exit 1
+          fi
+          echo "PASS: swift-version is '$SWIFT_VERSION'"
+
+      - name: Assert toolchain output is set and valid JSON
+        env:
+          TOOLCHAIN: ${{ steps.action.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if [ -z "$TOOLCHAIN" ]; then
+            echo "FAIL: toolchain output is empty"
+            exit 1
+          fi
+          echo "$TOOLCHAIN" | python3 -c "import sys,json; json.load(sys.stdin)" > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          fi
+          echo "PASS: toolchain is valid JSON"
+
+      - name: Assert toolchain download field references Swift 5.10
+        env:
+          TOOLCHAIN: ${{ steps.action.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if echo "$TOOLCHAIN" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          download = d.get('download', '')
+          dir_val = d.get('dir', '')
+          assert '5.10' in download or '5.10' in dir_val, f'expected 5.10 in download={download} or dir={dir_val}'
+          print('download:', download, 'dir:', dir_val)
+          " 2>/dev/null; then
+            echo "PASS: toolchain references Swift 5.10"
+          else
+            echo "FAIL: toolchain does not reference Swift 5.10"
+            exit 1
+          fi
+
+      - name: Assert toolchain JSON is non-empty object
+        env:
+          TOOLCHAIN: ${{ steps.action.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if echo "$TOOLCHAIN" | python3 -c "import sys,json; d=json.load(sys.stdin); assert len(d) > 0" 2>/dev/null; then
+            echo "PASS: toolchain JSON is non-empty object"
+          else
+            echo "FAIL: toolchain JSON appears to be empty or invalid"
+            exit 1
+          fi

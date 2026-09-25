@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "type": "node",
+      "name": "Debug Vitest Tests",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npx",
+      "args": ["vitest", "run", "--no-file-parallelism"]
+    }
+  ]
+}
