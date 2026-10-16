@@ -1,0 +1,38 @@
+name: Test development snapshot dry-run
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-swift
+        uses: .
+        with:
+          swift-version: 'latest'
+          development: 'true'
+          dry-run: 'true'
+      - name: Assert swift-version output is set
+        env:
+          SWIFT_VERSION: ${{ steps.setup-swift.outputs.swift-version }}
+        run: |
+          echo "swift-version: $SWIFT_VERSION"
+          if [ -z "$SWIFT_VERSION" ]; then
+            echo "FAIL: swift-version output is empty"
+            exit 1
+          fi
+          echo "PASS: swift-version is '$SWIFT_VERSION'"
+      - name: Assert toolchain output is set and valid JSON
+        env:
+          TOOLCHAIN: ${{ steps.setup-swift.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if [ -z "$TOOLCHAIN" ]; then
+            echo "FAIL: toolchain output is empty"
+            exit 1
+          fi
+          echo "$TOOLCHAIN" | python3 -m json.tool > /dev/null 2>&1 || {
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          }
+          echo "PASS: toolchain is valid JSON"

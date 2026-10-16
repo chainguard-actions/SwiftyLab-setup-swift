@@ -1,0 +1,47 @@
+name: Test specific Swift version dry-run
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-swift
+        uses: .
+        with:
+          swift-version: '5.10'
+          dry-run: 'true'
+      - name: Assert swift-version output matches expected major.minor
+        env:
+          SWIFT_VERSION: ${{ steps.setup-swift.outputs.swift-version }}
+        run: |
+          echo "swift-version: $SWIFT_VERSION"
+          if [ -z "$SWIFT_VERSION" ]; then
+            echo "FAIL: swift-version output is empty"
+            exit 1
+          fi
+          # Version should start with 5.10
+          case "$SWIFT_VERSION" in
+            5.10*)
+              echo "PASS: swift-version '$SWIFT_VERSION' starts with 5.10"
+              ;;
+            *)
+              echo "FAIL: expected version starting with 5.10, got '$SWIFT_VERSION'"
+              exit 1
+              ;;
+          esac
+      - name: Assert toolchain output is valid JSON with expected fields
+        env:
+          TOOLCHAIN: ${{ steps.setup-swift.outputs.toolchain }}
+        run: |
+          echo "toolchain: $TOOLCHAIN"
+          if [ -z "$TOOLCHAIN" ]; then
+            echo "FAIL: toolchain output is empty"
+            exit 1
+          fi
+          # Verify it's valid JSON
+          echo "$TOOLCHAIN" | python3 -m json.tool > /dev/null 2>&1 || {
+            echo "FAIL: toolchain output is not valid JSON"
+            exit 1
+          }
+          echo "PASS: toolchain is valid JSON"
