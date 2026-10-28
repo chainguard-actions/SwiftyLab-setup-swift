@@ -6,12 +6,12 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.12.0 | [`v1.12.0`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.12.0) | [`4bbb093`](https://github.com/SwiftyLab/setup-swift/commit/4bbb093f8c68d1dee1caa8b67c681a3f8fe70a91) |
-| v1.13.0 | [`v1.13.0`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.13.0) | [`86a5d3b`](https://github.com/SwiftyLab/setup-swift/commit/86a5d3b9cffda409de636eb5f63f3f5696fdbe36) |
-| v1.14.1 | [`v1.14.1`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.14.1) | [`9014d41`](https://github.com/SwiftyLab/setup-swift/commit/9014d4136569075c696d4151c7810ecde8712907) |
-| v1.14.2 | [`v1.14.2`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.14.2) | [`d602455`](https://github.com/SwiftyLab/setup-swift/commit/d60245579ea3836a3f2fa65ebbe1e8891d577c76) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v1.12.0 | [`v1.12.0`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.12.0) | [`4bbb093`](https://github.com/SwiftyLab/setup-swift/commit/4bbb093f8c68d1dee1caa8b67c681a3f8fe70a91) | [`HARDENING.md`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/blob/v1.12.0/HARDENING.md) |
+| v1.13.0 | [`v1.13.0`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.13.0) | [`86a5d3b`](https://github.com/SwiftyLab/setup-swift/commit/86a5d3b9cffda409de636eb5f63f3f5696fdbe36) | [`HARDENING.md`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/blob/v1.13.0/HARDENING.md) |
+| v1.14.1 | [`v1.14.1`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.14.1) | [`9014d41`](https://github.com/SwiftyLab/setup-swift/commit/9014d4136569075c696d4151c7810ecde8712907) | [`HARDENING.md`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/blob/v1.14.1/HARDENING.md) |
+| v1.14.2 | [`v1.14.2`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/tree/v1.14.2) | [`d602455`](https://github.com/SwiftyLab/setup-swift/commit/d60245579ea3836a3f2fa65ebbe1e8891d577c76) | [`HARDENING.md`](https://github.com/chainguard-actions/SwiftyLab-setup-swift/blob/v1.14.2/HARDENING.md) |
 
 ## Privacy
 
