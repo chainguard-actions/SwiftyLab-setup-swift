@@ -4,8 +4,13 @@
   "version": "v1.14.2",
   "commit_sha": "d60245579ea3836a3f2fa65ebbe1e8891d577c76",
   "url": "https://github.com/SwiftyLab/setup-swift",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/SwiftyLab/setup-swift/v1.14.2/sha256-647eb435fa59228de8b60c4029e0fb598337c10649bafc1d830e980899320967.tar.gz",
+    "sha256": "647eb435fa59228de8b60c4029e0fb598337c10649bafc1d830e980899320967",
+    "size_bytes": 638852
+  }
 }
